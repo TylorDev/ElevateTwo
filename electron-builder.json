@@ -1,0 +1,27 @@
+{
+  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  "appId": "com.ejemplo.miapp",
+  "productName": "Elevate",
+  "files": ["dist", "dist-electron"],
+  "win": {
+    "target": ["nsis"],
+    "fileAssociations": [
+      {
+        "ext": "mp3",
+        "name": "Musica",
+        "role": "Editor"
+      }
+    ],
+    "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
+  },
+  "mac": {
+    "fileAssociations": [
+      {
+        "ext": "mp3",
+        "name": "Musica",
+        "role": "Editor"
+      }
+    ],
+    "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
+  }
+}
