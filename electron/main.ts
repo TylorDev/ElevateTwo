@@ -1,9 +1,13 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, dialog } from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import fs from "node:fs";
+import { setupFileHandling } from "./Modules/fileHandling";
+import { setupDialogHandler } from "./Modules/handleTesting";
+import { openFile } from "./Utils/openFile";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+let win: BrowserWindow | null;
 
 function createWindow() {
   win = new BrowserWindow({
@@ -20,33 +24,9 @@ function createWindow() {
     win.loadFile(path.join(RENDERER_DIST, "index.html"));
   }
 
-  win.webContents.on("did-finish-load", () => {
-    if (ArgFilePath) {
-      openFile(ArgFilePath); // Función para enviar el archivo al renderizado
-      ArgFilePath = null; // Limpiar después de usarlo
-    }
-  });
-}
-
-function openFile(filePath: string) {
-  fs.readFile(filePath, { encoding: "base64" }, (err, data) => {
-    if (err) {
-      console.error("Error al leer el archivo:", err);
-      return;
-    }
-    win?.webContents.send("open-file", data); // Enviar el archivo al renderizado
-  });
-}
-
-let win: BrowserWindow | null;
-let ArgFilePath: string | null = null;
-
-// Manejar archivos pasados como argumentos
-if (process.argv.length > 1) {
-  const potentialFile = process.argv[process.argv.length - 1];
-  if (fs.existsSync(potentialFile)) {
-    ArgFilePath = potentialFile;
-  }
+  setupFileHandling(win);
+  setupDialogHandler(win);
+  return win;
 }
 
 app.whenReady().then(() => {
@@ -55,37 +35,33 @@ app.whenReady().then(() => {
   if (!gotTheLock) {
     app.quit();
   } else {
-    app.on("second-instance", (_, commandLine) => {
-      const filePath = commandLine.find(
-        (arg) => arg.endsWith(".mp3") || arg.endsWith(".wav")
-      );
-      if (filePath) {
-        if (win) {
-          // Enfocar la ventana y enviar el archivo
-          if (win.isMinimized()) win.restore();
-          win.focus();
-          openFile(filePath);
-        } else {
-          ArgFilePath = filePath;
-          createWindow();
-        }
-      }
-    });
-
-    createWindow();
+    const mainWindow = createWindow(); // Asumiendo que `createWindow()` retorna la ventana creada
 
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) {
         createWindow();
       }
     });
-  }
-});
 
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-    win = null;
+    // Manejar el intento de abrir una segunda instancia
+    app.on("second-instance", (_, argv) => {
+      // Filtrar los parámetros buscando una ruta de archivo
+      const filePath = argv.find(
+        (arg) => path.extname(arg).toLowerCase() === ".mp3"
+      ); // Cambia a otros tipos si es necesario
+
+      if (filePath) {
+        // Mostrar el mensaje con la ruta del archivo
+        dialog.showMessageBox({
+          type: "info",
+          title: "Segunda instancia",
+          message: `La segunda instancia intentó abrir el archivo: ${filePath}`,
+        });
+
+        // Llamar a la función openFile con la ruta del archivo y la ventana principal
+        openFile(filePath, mainWindow);
+      }
+    });
   }
 });
 

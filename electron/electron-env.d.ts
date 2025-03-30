@@ -24,6 +24,18 @@ interface CustomIpcRenderer {
 }
 
 // Usa la interfaz extendida en el objeto `window`
-interface Window {
-  ipcRenderer: CustomIpcRenderer;
+declare global {
+  interface Window {
+    ipcRenderer: CustomIpcRenderer;
+  }
+}
+
+declare global {
+  interface AudioMetadata {
+    base64: string;
+    name: string;
+    artist: string;
+    cover: Uint8Array | null;
+    coverMimeType?: string;
+  }
 }

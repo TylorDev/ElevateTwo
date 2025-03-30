@@ -1,1 +1,33 @@
-"use strict";const o=require("electron");o.contextBridge.exposeInMainWorld("ipcRenderer",{on(...e){const[r,n]=e;return o.ipcRenderer.on(r,(i,...t)=>n(i,...t))},off(...e){const[r,...n]=e;return o.ipcRenderer.off(r,...n)},send(...e){const[r,...n]=e;return o.ipcRenderer.send(r,...n)},invoke(...e){const[r,...n]=e;return o.ipcRenderer.invoke(r,...n)},onFileOpen(e){o.ipcRenderer.on("open-file",(r,n)=>{e(n)})},offFileOpen(){o.ipcRenderer.removeAllListeners("open-file")}});
+"use strict";
+const electron = require("electron");
+electron.contextBridge.exposeInMainWorld("ipcRenderer", {
+  on(...args) {
+    const [channel, listener] = args;
+    return electron.ipcRenderer.on(
+      channel,
+      (event, ...args2) => listener(event, ...args2)
+    );
+  },
+  off(...args) {
+    const [channel, ...omit] = args;
+    return electron.ipcRenderer.off(channel, ...omit);
+  },
+  send(...args) {
+    const [channel, ...omit] = args;
+    return electron.ipcRenderer.send(channel, ...omit);
+  },
+  invoke(...args) {
+    const [channel, ...omit] = args;
+    return electron.ipcRenderer.invoke(channel, ...omit);
+  },
+  onFileOpen(callback) {
+    electron.ipcRenderer.on("open-file", (_event, filePath) => {
+      callback(filePath);
+    });
+  },
+  offFileOpen() {
+    electron.ipcRenderer.removeAllListeners("open-file");
+  }
+  // You can expose other APTs you need here.
+  // ...
+});
