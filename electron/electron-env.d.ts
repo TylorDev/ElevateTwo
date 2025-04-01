@@ -29,13 +29,3 @@ declare global {
     ipcRenderer: CustomIpcRenderer;
   }
 }
-
-declare global {
-  interface AudioMetadata {
-    base64: string;
-    name: string;
-    artist: string;
-    cover: Uint8Array | null;
-    coverMimeType?: string;
-  }
-}

@@ -1,9 +1,10 @@
 import "electron";
 import "node:url";
 import "node:path";
-import { Y, Z, X } from "./main-BIxAcdYS.js";
+import { Y as t, Z as _, X as i } from "./main-Dmqfrony.js";
+import "fs";
 export {
-  Y as MAIN_DIST,
-  Z as RENDERER_DIST,
-  X as VITE_DEV_SERVER_URL
+  t as MAIN_DIST,
+  _ as RENDERER_DIST,
+  i as VITE_DEV_SERVER_URL
 };

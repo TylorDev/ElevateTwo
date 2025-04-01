@@ -1,7 +1,7 @@
 import { BrowserWindow, ipcMain, dialog } from "electron";
 import * as fs from "fs";
 import { parseFile } from "music-metadata";
-import { AudioMetadata } from "../electron-env.d.ts";
+import { AudioMetadata } from "src/types/global";
 
 export function setupDialogHandler(browserWindow: BrowserWindow) {
   ipcMain.handle("dialog:openFile", async () => {
@@ -12,10 +12,13 @@ export function setupDialogHandler(browserWindow: BrowserWindow) {
     });
 
     if (!canceled && filePaths.length > 0) {
-      const filePath = filePaths[0];
-      return readAudioFile(filePath);
+      return readAudioFile(filePaths[0]);
     }
     return null;
+  });
+
+  ipcMain.handle("process-file", async (_event, filePath: string) => {
+    return readAudioFile(filePath);
   });
 }
 

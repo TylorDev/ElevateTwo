@@ -1,13 +1,12 @@
-import { app, BrowserWindow, dialog } from "electron";
+import { app, BrowserWindow } from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { setupFileHandling } from "./Modules/fileHandling";
 import { setupDialogHandler } from "./Modules/handleTesting";
-import { openFile } from "./Utils/openFile";
-
+import * as fs from "fs";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 let win: BrowserWindow | null;
+const DEFAULT_FILE_PATH = "D:\\My Way.mp3";
 
 function createWindow() {
   win = new BrowserWindow({
@@ -24,7 +23,6 @@ function createWindow() {
     win.loadFile(path.join(RENDERER_DIST, "index.html"));
   }
 
-  setupFileHandling(win);
   setupDialogHandler(win);
   return win;
 }
@@ -36,30 +34,36 @@ app.whenReady().then(() => {
     app.quit();
   } else {
     const mainWindow = createWindow(); // Asumiendo que `createWindow()` retorna la ventana creada
+    app.on("second-instance", (_event, commandLine) => {
+      // Extraer el archivo del segundo argumento (ignorando el ejecutable)
+      const newFilePath = commandLine
+        .slice(1)
+        .find((arg) => fs.existsSync(arg) && arg.endsWith(".mp3"));
+
+      if (newFilePath && mainWindow) {
+        mainWindow.webContents.send("file-selected", newFilePath);
+        mainWindow.focus(); // Traer la ventana al frente
+      }
+    });
+    // Capturar argumentos pasados
+    const args = process.argv.slice(1); // Ignorar el primer argumento (ejecutable)
+    let filePath = args.find(
+      (arg) => fs.existsSync(arg) && arg.endsWith(".mp3")
+    );
+
+    // Si no hay argumento válido, usar el archivo predeterminado
+    if (!filePath && fs.existsSync(DEFAULT_FILE_PATH)) {
+      filePath = DEFAULT_FILE_PATH;
+    }
+    if (filePath) {
+      mainWindow.webContents.once("did-finish-load", () => {
+        mainWindow?.webContents.send("file-selected", filePath);
+      });
+    }
 
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) {
         createWindow();
-      }
-    });
-
-    // Manejar el intento de abrir una segunda instancia
-    app.on("second-instance", (_, argv) => {
-      // Filtrar los parámetros buscando una ruta de archivo
-      const filePath = argv.find(
-        (arg) => path.extname(arg).toLowerCase() === ".mp3"
-      ); // Cambia a otros tipos si es necesario
-
-      if (filePath) {
-        // Mostrar el mensaje con la ruta del archivo
-        dialog.showMessageBox({
-          type: "info",
-          title: "Segunda instancia",
-          message: `La segunda instancia intentó abrir el archivo: ${filePath}`,
-        });
-
-        // Llamar a la función openFile con la ruta del archivo y la ventana principal
-        openFile(filePath, mainWindow);
       }
     });
   }

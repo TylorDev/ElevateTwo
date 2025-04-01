@@ -20,14 +20,11 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
     const [channel, ...omit] = args;
     return ipcRenderer.invoke(channel, ...omit);
   },
-  onFileOpen(callback: (filePath: string) => void) {
-    ipcRenderer.on("open-file", (_event, filePath) => {
-      callback(filePath);
-    });
-  },
   offFileOpen() {
-    ipcRenderer.removeAllListeners("open-file");
+    ipcRenderer.removeAllListeners("file-selected");
   },
+  triggerSecondInstance: () => ipcRenderer.send("simulate-second-instance"),
+
   // You can expose other APTs you need here.
   // ...
 });
